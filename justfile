@@ -1,18 +1,22 @@
 # Wiki-Craft Justfile
 # Run `just` to see available commands
 
+# Use python3/pip3 explicitly for macOS compatibility
+python := "python3"
+pip := "pip3"
+
 # Default recipe - show help
 default:
     @just --list
 
 # Install all dependencies (Python + Node)
 install:
-    pip install -e .
+    {{pip}} install -e .
     cd frontend && npm install
 
 # Install Python backend only
 install-backend:
-    pip install -e .
+    {{pip}} install -e .
 
 # Install frontend dependencies only
 install-frontend:
@@ -59,7 +63,7 @@ fresh: clean install build-frontend
 
 # Run Python tests
 test:
-    pytest
+    {{python}} -m pytest
 
 # Run frontend linting
 lint-frontend:
