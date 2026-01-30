@@ -1,21 +1,30 @@
 # Wiki-Craft Justfile
 # Run `just` to see available commands
 
-# Use python3/pip3 explicitly for macOS compatibility
-python := "python3"
-pip := "pip3"
+# Virtual environment directory
+venv_dir := ".venv"
+python := venv_dir / "bin/python"
+pip := venv_dir / "bin/pip"
 
 # Default recipe - show help
 default:
     @just --list
 
+# Create virtual environment if it doesn't exist
+venv:
+    #!/usr/bin/env bash
+    if [ ! -d "{{venv_dir}}" ]; then
+        echo "Creating virtual environment..."
+        python3 -m venv {{venv_dir}}
+    fi
+
 # Install all dependencies (Python + Node)
-install:
+install: venv
     {{pip}} install -e .
     cd frontend && npm install
 
 # Install Python backend only
-install-backend:
+install-backend: venv
     {{pip}} install -e .
 
 # Install frontend dependencies only
@@ -30,12 +39,12 @@ build-frontend:
 run: install build-frontend serve
 
 # Start the backend server (serves frontend if built)
-serve:
-    wiki-craft serve
+serve: venv
+    {{python}} -m wiki_craft.main serve
 
 # Start backend with auto-reload for development
-dev-backend:
-    uvicorn wiki_craft.api.app:app --reload --host 0.0.0.0 --port 8000
+dev-backend: venv
+    {{venv_dir}}/bin/uvicorn wiki_craft.api.app:app --reload --host 0.0.0.0 --port 8000
 
 # Start frontend dev server with hot reload
 dev-frontend:
@@ -58,11 +67,15 @@ clean:
     find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
     find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
 
+# Clean everything including venv
+clean-all: clean
+    rm -rf {{venv_dir}}
+
 # Clean and reinstall everything
-fresh: clean install build-frontend
+fresh: clean-all install build-frontend
 
 # Run Python tests
-test:
+test: venv
     {{python}} -m pytest
 
 # Run frontend linting
@@ -81,3 +94,7 @@ health:
 docs:
     @echo "API Docs: http://localhost:8000/docs"
     @echo "ReDoc:    http://localhost:8000/redoc"
+
+# Activate venv instructions
+activate:
+    @echo "Run: source {{venv_dir}}/bin/activate"
